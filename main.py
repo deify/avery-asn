@@ -1,45 +1,46 @@
 import os
 import sys
 
-import AveryLabels
 from reportlab.lib.units import mm
-from reportlab_qrcode import QRCodeImage
 from reportlab.pdfgen import canvas
+from reportlab_qrcode import QRCodeImage
+
+import AveryLabels
 
 ### config ###
-labelForm = 4778
+labelForm = 4731
 
 # mode "qr" prints a QR code and an ASN (archive serial number) text
 mode = "qr"
 
 # mode text prints a free text
-#mode = "text"
-#text="6y"
+# mode = "text"
+# text="6y"
 
 # print multiple labels on a single cutout of a label sheet
-subLabelsX = 2
-subLabelsY = 2
+subLabelsX = 1
+subLabelsY = 1
 
 # what was the first ASN number printed on this sheet
-firstASNOnSheet = 42
+firstASNOnSheet = 1
 # how many labels have already been printed on this sheet successfully
-labelsAlreadyPrinted = 20
+labelsAlreadyPrinted = 0
 # how many labels have been corrupted on this sheet because of misprints
-labelsCorrupted = 4
+labelsCorrupted = 0
 # how many labels should be printed now
-labelsToPrint = 18
+labelsToPrint = 189
 
-fontSize = 2*mm
+fontSize = 2 * mm
 qrSize = 0.9
-qrMargin = 1*mm
+qrMargin = 1 * mm
 
 debug = False
-positionHelper = True
+positionHelper = False
 
 ### pre-calculation ###
-asnsAlreadyPrinted = (labelsAlreadyPrinted-labelsCorrupted)*subLabelsX*subLabelsY
+asnsAlreadyPrinted = (labelsAlreadyPrinted - labelsCorrupted) * subLabelsX * subLabelsY
 startASN = firstASNOnSheet + asnsAlreadyPrinted
-offsetLabels = labelsAlreadyPrinted+labelsCorrupted
+offsetLabels = labelsAlreadyPrinted + labelsCorrupted
 
 ### globals ###
 currentASN = startASN
@@ -53,13 +54,13 @@ def render(c: canvas.Canvas, width: float, height: float):
     global subLabelsX
     global subLabelsY
 
-    subLabelWidth = width/subLabelsX
-    subLabelHeight = height/subLabelsY
+    subLabelWidth = width / subLabelsX
+    subLabelHeight = height / subLabelsY
 
     for i in range(subLabelsX):
-        for j in range(subLabelsY-1, -1, -1):  # no idea why inverted...
-            subX = subLabelWidth*i
-            subY = subLabelHeight*j
+        for j in range(subLabelsY - 1, -1, -1):  # no idea why inverted...
+            subX = subLabelWidth * i
+            subY = subLabelHeight * j
 
             c.saveState()
             c.translate(subX, subY)
@@ -68,11 +69,14 @@ def render(c: canvas.Canvas, width: float, height: float):
                 barcode_value = f"ASN{currentASN:05d}"
                 currentASN = currentASN + 1
 
-                qr = QRCodeImage(barcode_value, size=subLabelHeight*qrSize)
-                qr.drawOn(c, x=qrMargin, y=subLabelHeight*((1-qrSize)/2))
+                qr = QRCodeImage(barcode_value, size=subLabelHeight * qrSize)
+                qr.drawOn(c, x=qrMargin, y=subLabelHeight * ((1 - qrSize) / 2))
                 c.setFont("Helvetica", size=fontSize)
-                c.drawString(x=subLabelHeight, y=(
-                    subLabelHeight-fontSize)/2, text=barcode_value)
+                c.drawString(
+                    x=subLabelHeight,
+                    y=(subLabelHeight - fontSize) / 2,
+                    text=barcode_value,
+                )
 
             elif mode == "text":
                 if debug:
@@ -80,8 +84,9 @@ def render(c: canvas.Canvas, width: float, height: float):
                     count = count + 1
 
                 c.drawString(
-                    x=(subLabelWidth-2*fontSize)/2, y=(subLabelHeight-fontSize)/2,
-                    text=text if not debug else str(count)
+                    x=(subLabelWidth - 2 * fontSize) / 2,
+                    y=(subLabelHeight - fontSize) / 2,
+                    text=text if not debug else str(count),
                 )
 
             if positionHelper:
@@ -90,16 +95,17 @@ def render(c: canvas.Canvas, width: float, height: float):
                 if debug:
                     r = 0.5
                     d = r
-                c.circle(x_cen=0+d, y_cen=0+d, r=r, stroke=1)
-                c.circle(x_cen=subLabelWidth-d, y_cen=0+d, r=r, stroke=1)
-                c.circle(x_cen=0+d, y_cen=subLabelHeight-d, r=r, stroke=1)
-                c.circle(x_cen=subLabelWidth-d,
-                            y_cen=subLabelHeight-d, r=r, stroke=1)
+                c.circle(x_cen=0 + d, y_cen=0 + d, r=r, stroke=1)
+                c.circle(x_cen=subLabelWidth - d, y_cen=0 + d, r=r, stroke=1)
+                c.circle(x_cen=0 + d, y_cen=subLabelHeight - d, r=r, stroke=1)
+                c.circle(
+                    x_cen=subLabelWidth - d, y_cen=subLabelHeight - d, r=r, stroke=1
+                )
 
             c.restoreState()
 
 
-outputDirectory = 'out'
+outputDirectory = "out"
 fileName = os.path.join(outputDirectory, f"labels-{labelForm}-{mode}.pdf")
 
 label = AveryLabels.AveryLabel(labelForm)

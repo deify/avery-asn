@@ -21,8 +21,11 @@ mode = "qr"
 subLabelsX = 1
 subLabelsY = 1
 
+# asn page to print (0-based, so 0 means the first page with ASNs 1-189, 1 means the second page with ASNs 190-378, etc.)
+next_asn_page = 2
+
 # what was the first ASN number printed on this sheet
-firstASNOnSheet = 1
+firstASNOnSheet = next_asn_page * 189 + 1
 # how many labels have already been printed on this sheet successfully
 labelsAlreadyPrinted = 0
 # how many labels have been corrupted on this sheet because of misprints
@@ -118,5 +121,4 @@ label.open(fileName)
 label.render(render, count=labelsToPrint, offset=offsetLabels)
 label.close()
 
-print
 print(fileName)
